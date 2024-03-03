@@ -1,25 +1,74 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useState, useEffect } from "react";
+import "./App.css"
 
-function App() {
+const App = () => {
+  const [countries, setCountries] = useState([]);
+  const [filteredCountries, setFilteredCountries] = useState([]);
+  const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  useEffect(() => {
+    const fetchCountries = async () => {
+      try {
+        const response = await fetch("https://restcountries.com/v3.1/all");
+        if (!response.ok) {
+          throw new Error("Failed to fetch countries");
+        }
+        const data = await response.json();
+        setCountries(data);
+        setFilteredCountries(data);
+      } catch (error) {
+        setError(error.message);
+        console.error(error);
+      }
+    };
+    fetchCountries();
+  }, []);
+
+  const handleSearch = (e) => {
+    const searchTerm = e.target.value;
+    setSearchTerm(searchTerm);
+    const filtered = countries.filter((country) =>
+      country.name.common.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredCountries(filtered);
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div>
+      {error && <p>Error: {error}</p>}
+      <div className="searchInput">
+        <input
+          type="text"
+          placeholder="Search for countries..."
+          value={searchTerm}
+          onChange={handleSearch}
+        />
+      </div>
+      <div className="container">
+        {filteredCountries.map((country) => (
+          <div
+            key={country.name.common}
+            className={`card countryCard`}
+          >
+            <img
+              src={country.flags.png}
+              alt={country.flags.alt}
+              className="flag"
+            />
+            <div>
+              <h2>{country.name.common}</h2>
+              <p>Region: {country.region}</p>
+              <p>Population: {country.population}</p>
+            </div>
+          </div>
+        ))}
+        {filteredCountries.length === 0 && (
+          <p>No countries found matching the search term.</p>
+        )}
+      </div>
     </div>
   );
-}
+};
 
 export default App;
